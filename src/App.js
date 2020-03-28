@@ -4,24 +4,26 @@ import "./App.css";
 import Whether from "./component/whether.component";
 import "weather-icons/css/weather-icons.css";
 import Axios from "axios";
+import Forml from "./component/form.component";
 const API_KEY = "7389684a96880c4bfc057d73a8062998";
 //api.openweathermap.org/data/2.5/weather?q=London,uk
 class App extends Component {
   constructor(props) {
     super(props);
-    this.getWhether();
+    // this.getWhether();
     this.state = {
       city: undefined,
       country: undefined,
       icon: undefined,
       main: undefined,
       celsius: undefined,
-      temp_max: undefined,
-      temp_min: undefined,
-      description: ""
+      temp_max: null,
+      temp_min: null,
+      description: "",
+      error: false
     };
 
-    this.getWhether();
+    // this.getWhether();
     this.whethericon = {
       Thunderstorm: "wi-thunderstorm",
       Drizzle: "wi-sleet",
@@ -59,25 +61,35 @@ class App extends Component {
         this.setState({ icon: icons.Clouds });
     }
   }
-  getWhether = async () => {
-    const api_get = await fetch(
-      `http://api.openweathermap.org/data/2.5/weather?q=London,uk&appid=${API_KEY}`
-    );
-    // console.log(api_get);
-    const response = await api_get.json();
-    console.log(response);
+  getWhether = async e => {
+    e.preventDefault();
+    const city = e.target.elements.city.value;
+    const country = e.target.elements.country.value;
 
-    this.setState({
-      city: response.name,
-      country: response.sys.country,
-      icon: this.whethericon.Thunderstorm,
-      celsius: this.calCelsius(response.main.temp),
-      description: response.weather[0].description,
-      temp_max: this.calCelsius(response.main.temp_max),
-      temp_min: this.calCelsius(response.main.temp_min)
-    });
-    console.log(response);
-    this.get_WeatherIcon(this.whethericon, response.weather[0].id);
+    if (country && city) {
+      const api_get = await fetch(
+        `http://api.openweathermap.org/data/2.5/weather?q=${city},${country}&appid=${API_KEY}`
+      );
+
+      const response = await api_get.json();
+      // console.log(response);
+
+      this.setState({
+        city: `${response.name} ,${response.sys.country}`,
+        // city: response.name,
+        // country: response.sys.country,
+        // icon: this.whethericon.Thunderstorm,
+        celsius: this.calCelsius(response.main.temp),
+        description: response.weather[0].description,
+        temp_max: this.calCelsius(response.main.temp_max),
+        temp_min: this.calCelsius(response.main.temp_min),
+        error: false
+      });
+      console.log(response);
+      this.get_WeatherIcon(this.whethericon, response.weather[0].id);
+    } else {
+      this.setState({ error: true });
+    }
   };
 
   calCelsius(temp) {
@@ -88,6 +100,7 @@ class App extends Component {
   render() {
     return (
       <div className="container">
+        <Forml loadwhether={this.getWhether} error={this.state.error} />
         <Whether
           city={this.state.city}
           country={this.state.country}
